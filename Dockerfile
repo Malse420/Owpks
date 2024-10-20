@@ -14,6 +14,10 @@ RUN git clone https://github.com/P2Enjoy/sd-webui-roop-uncensored.git extensions
 # Install WebUI dependencies
 RUN pip install -r requirements.txt
 
+# Create the models directory for Roop extension and download simswapper_512_beta.onnx
+RUN mkdir -p /app/models/roop/ && \
+    wget -O /app/models/roop/simswapper_512_beta.onnx https://huggingface.co/netrunner-exe/Insight-Swap-models-onnx/resolve/8d4ab0b123254fc1c5a37f3a7f3188a80ecf0459/simswap_512_beta.onnx?download=true
+
 # Install Tailscale for SSH
 RUN curl -fsSL https://tailscale.com/install.sh | sh
 

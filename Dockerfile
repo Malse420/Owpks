@@ -1,8 +1,8 @@
 FROM python:3.10-slim
 
-# Install system dependencies for Debian-based systems
+# Install system dependencies for Debian-based systems, including TCMalloc
 RUN apt-get update && apt-get install -y \
-    wget git python3 python3-venv libgl1 libglib2.0-0 curl && \
+    wget git python3 python3-venv libgl1 libglib2.0-0 curl libgoogle-perftools-dev && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user

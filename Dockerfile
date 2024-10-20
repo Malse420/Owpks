@@ -50,7 +50,7 @@ RUN chmod +x /entrypoint.sh
 USER webui-user
 
 # Set environment variables for GPU and WebUI
-ENV CUDA_VISIBLE_DEVICES=0
+ENV CUDA_VISIBLE_DEVICES=all
 ENV WEBUI_FLAGS="--precision full --no-half"
 
 ENTRYPOINT ["/entrypoint.sh"]

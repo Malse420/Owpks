@@ -6,18 +6,19 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=America/Chicago
 
 # Install system dependencies, Python 3.9, and necessary libraries
-RUN apt-get update && apt-get install -y \
+# Combine apt-get commands to reduce layers and clear cache to save space
+RUN apt-get update && apt-get install -y --no-install-recommends \
     wget git python3.9 python3.9-distutils python3.9-venv \
     libgl1 libglib2.0-0 curl libgoogle-perftools-dev sudo ffmpeg && \
     ln -sf /usr/bin/python3.9 /usr/bin/python3 && \
     ln -sf /usr/bin/python3.9 /usr/bin/python && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
+    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Install pip for Python 3.9
+# Install pip for Python 3.9 and remove the installer after use
 RUN wget https://bootstrap.pypa.io/get-pip.py && python3 get-pip.py && rm get-pip.py
 
-# Install PyTorch with CUDA
-RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117
+# Install PyTorch with CUDA, using --no-cache-dir to avoid pip caching
+RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117
 
 # Create a non-root user to avoid running processes as root
 RUN useradd -m webui-user
@@ -29,24 +30,24 @@ WORKDIR /home/webui-user
 # Clone the AUTOMATIC1111 Stable Diffusion WebUI
 RUN git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git /home/webui-user/webui
 
-# Install Stable Diffusion WebUI dependencies
+# Install Stable Diffusion WebUI dependencies, use --no-cache-dir to save space
 WORKDIR /home/webui-user/webui
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Install Roop Uncensored extension
 RUN git clone https://github.com/s0md3v/sd-webui-roop.git extensions/sd-webui-roop
 
 # Install the required insightface library for Roop extension
-RUN pip install insightface==0.7.3
+RUN pip install --no-cache-dir insightface==0.7.3
 
 # Create the models directory for Roop and download necessary models
+# Save space by removing wget artifacts and unused files
 RUN mkdir -p /home/webui-user/webui/models/roop/ && \
     wget -O /home/webui-user/webui/models/roop/simswapper_512_beta.onnx https://huggingface.co/netrunner-exe/Insight-Swap-models-onnx/resolve/main/simswap_512_beta.onnx && \
     wget -O /home/webui-user/webui/models/roop/inswapper_128.onnx https://huggingface.co/path-to-inswapper-model/inswapper_128.onnx && \
     wget -O /home/webui-user/webui/models/roop/faceonnx.onnx https://github.com/FaceONNX/FaceONNX/releases/download/v1.0/faceonnx.onnx && \
     wget -O /home/webui-user/webui/models/flux_realism_lora.safetensors https://huggingface.co/XLabs-AI/flux-RealismLora/resolve/main/lora.safetensors && \
-    wget -O /home/webui-user/webui/models/flux_controlnet_canny.safetensors https://huggingface.co/XLabs-AI/flux-controlnet-collections/resolve/main/canny.safetensors && \
-    wget -O /home/webui-user/webui/models/flux_controlnet_depth.safetensors https://huggingface.co/XLabs-AI/flux-controlnet-collections/resolve/main/depth.safetensors
+    rm -rf /tmp/* /var/tmp/*
 
 # Install Tailscale for SSH
 RUN curl -fsSL https://tailscale.com/install.sh | sudo sh

@@ -18,7 +18,6 @@ RUN apt-get update && \
     ln -sf /usr/bin/python3.10 /usr/bin/python && \
     curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/focal.noarmor.gpg | sudo tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null && \
     curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/focal.tailscale-keyring.list | sudo tee /etc/apt/sources.list.d/tailscale.list && \
-    apt update && apt install tailscale && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install pip for Python 3.10 and remove the installer after use

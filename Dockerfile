@@ -51,7 +51,6 @@ RUN pip install --no-cache-dir insightface
 RUN mkdir -p /home/webui-user/webui/models/roop/ && \
     wget -O /home/webui-user/webui/models/roop/simswapper_512_beta.onnx https://huggingface.co/netrunner-exe/Insight-Swap-models-onnx/resolve/main/simswap_512_beta.onnx && \
     wget -O /home/webui-user/webui/models/roop/inswapper_128.onnx https://huggingface.co/ezioruan/inswapper_128.onnx/resolve/main/inswapper_128.onnx && \
-    wget -O /home/webui-user/webui/models/roop/faceonnx.onnx https://github.com/FaceONNX/FaceONNX/releases/download/v1.0/faceonnx.onnx && \
     wget -O /home/webui-user/webui/models/flux_realism_lora.safetensors https://huggingface.co/XLabs-AI/flux-RealismLora/resolve/main/lora.safetensors && \
     rm -rf /tmp/* /var/tmp/*
 

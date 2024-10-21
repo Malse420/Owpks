@@ -23,8 +23,8 @@ RUN wget https://bootstrap.pypa.io/get-pip.py && python3 get-pip.py && rm get-pi
 
 # Install PyTorch with CUDA, using --no-cache-dir to avoid pip caching
 RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117
-RUN wget https://github.com/Gourieff/Assets/raw/main/Insightface/insightface-0.7.3-cp310-cp310-win_amd64.whl
-RUN pip install insightface-0.7.3-cp310-cp310-win_amd64.whl
+RUN wget https://huggingface.co/deauxpas/colabrepo/resolve/main/insightface-0.7.3-cp310-cp310-linux_x86_64.whl
+RUN pip install insightface-0.7.3-cp310-cp310-linux_x86_64.whl
 
 # Create a non-root user to avoid running processes as root
 RUN useradd -m webui-user

@@ -38,7 +38,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN git clone https://github.com/s0md3v/sd-webui-roop.git extensions/sd-webui-roop
 
 # Install the required insightface library for Roop extension
-RUN pip install --no-cache-dir insightface==0.7.3
+RUN pip install --no-cache-dir insightface
 
 # Create the models directory for Roop and download necessary models
 # Save space by removing wget artifacts and unused files

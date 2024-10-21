@@ -4,6 +4,8 @@ FROM nvidia/cuda:11.7.1-cudnn8-runtime-ubuntu20.04
 # Set environment variables to avoid interactive tzdata configuration
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=America/Chicago
+curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/focal.noarmor.gpg | sudo tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
+curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/focal.tailscale-keyring.list | sudo tee /etc/apt/sources.list.d/tailscale.list
 
 # Install system dependencies, Python 3.10, and necessary libraries
 # Combine apt-get commands to reduce layers and clear cache to save space
@@ -16,6 +18,8 @@ RUN apt-get update && \
         libgl1 libglib2.0-0 curl libgoogle-perftools-dev sudo ffmpeg && \
     ln -sf /usr/bin/python3.10 /usr/bin/python3 && \
     ln -sf /usr/bin/python3.10 /usr/bin/python && \
+    curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/focal.noarmor.gpg | sudo tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
+    curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/focal.tailscale-keyring.list | sudo tee /etc/apt/sources.list.d/tailscale.list && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Install pip for Python 3.10 and remove the installer after use
@@ -55,7 +59,7 @@ RUN mkdir -p /home/webui-user/webui/models/roop/ && \
     rm -rf /tmp/* /var/tmp/*
 
 # Install Tailscale for SSH
-RUN echo "$TAILSCALE_AUTH_KEY" | sudo -S sh -c 'curl -fsSL https://tailscale.com/install.sh | sudo sh'
+RUN curl "$TAILSCALE_AUTH_KEY"
 # Expose necessary ports for WebUI and Tailscale SSH
 EXPOSE 7860 22
 

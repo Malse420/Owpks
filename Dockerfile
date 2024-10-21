@@ -5,22 +5,27 @@ FROM nvidia/cuda:11.7.1-cudnn8-runtime-ubuntu20.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=America/Chicago
 
-# Install system dependencies, Python 3.9, and necessary libraries
+# Install system dependencies, Python 3.10, and necessary libraries
 # Combine apt-get commands to reduce layers and clear cache to save space
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    wget git python3.10 python3.10-distutils python3.10-venv \
-    libgl1 libglib2.0-0 curl libgoogle-perftools-dev sudo ffmpeg && \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends software-properties-common && \
+    add-apt-repository ppa:deadsnakes/ppa && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        wget git python3.10 python3.10-distutils python3.10-venv \
+        libgl1 libglib2.0-0 curl libgoogle-perftools-dev sudo ffmpeg && \
     ln -sf /usr/bin/python3.10 /usr/bin/python3 && \
     ln -sf /usr/bin/python3.10 /usr/bin/python && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Install pip for Python 3.9 and remove the installer after use
+# Install pip for Python 3.10 and remove the installer after use
 RUN wget https://bootstrap.pypa.io/get-pip.py && python3 get-pip.py && rm get-pip.py
 
 # Install PyTorch with CUDA, using --no-cache-dir to avoid pip caching
 RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117
 RUN wget https://github.com/Gourieff/Assets/raw/main/Insightface/insightface-0.7.3-cp310-cp310-win_amd64.whl
 RUN pip install insightface-0.7.3-cp310-cp310-win_amd64.whl
+
 # Create a non-root user to avoid running processes as root
 RUN useradd -m webui-user
 

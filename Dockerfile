@@ -16,11 +16,6 @@ RUN apt-get update && apt-get install -y \
 # Install pip for Python 3.9
 RUN wget https://bootstrap.pypa.io/get-pip.py && python3 get-pip.py && rm get-pip.py
 
-# Install NVIDIA Container Toolkit for GPU acceleration
-RUN apt-get update && apt-get install -y nvidia-container-toolkit && \
-    nvidia-ctk runtime configure --runtime=docker && \
-    systemctl restart docker
-
 # Install PyTorch with CUDA
 RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117
 

@@ -1,14 +1,14 @@
-# Base image with CUDA 11.7 and cuDNN8
+# Base image with CUDA 11.7 and cuDNN8 for GPU acceleration
 FROM nvidia/cuda:11.7.1-cudnn8-runtime-ubuntu20.04
 
 # Set environment variables to avoid interactive tzdata configuration
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=America/Chicago
 
-# Install system dependencies, including Python 3.9
+# Install system dependencies, Python 3.9, and necessary libraries
 RUN apt-get update && apt-get install -y \
     wget git python3.9 python3.9-distutils python3.9-venv \
-    libgl1 libglib2.0-0 curl libgoogle-perftools-dev sudo && \
+    libgl1 libglib2.0-0 curl libgoogle-perftools-dev sudo ffmpeg && \
     ln -sf /usr/bin/python3.9 /usr/bin/python3 && \
     ln -sf /usr/bin/python3.9 /usr/bin/python && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -39,12 +39,14 @@ RUN git clone https://github.com/s0md3v/sd-webui-roop.git extensions/sd-webui-ro
 # Install the required insightface library for Roop extension
 RUN pip install insightface==0.7.3
 
-# Create the models directory for Roop and download simswapper_512_beta.onnx
+# Create the models directory for Roop and download necessary models
 RUN mkdir -p /home/webui-user/webui/models/roop/ && \
-    wget -O /home/webui-user/webui/models/roop/simswapper_512_beta.onnx https://huggingface.co/netrunner-exe/Insight-Swap-models-onnx/resolve/8d4ab0b123254fc1c5a37f3a7f3188a80ecf0459/simswap_512_beta.onnx?download=true
-
-# Optional: Download inswapper_128.onnx in case of 'NoneType' errors
-RUN wget -O /home/webui-user/webui/models/roop/inswapper_128.onnx https://huggingface.co/path-to-inswapper-model/inswapper_128.onnx
+    wget -O /home/webui-user/webui/models/roop/simswapper_512_beta.onnx https://huggingface.co/netrunner-exe/Insight-Swap-models-onnx/resolve/main/simswap_512_beta.onnx && \
+    wget -O /home/webui-user/webui/models/roop/inswapper_128.onnx https://huggingface.co/path-to-inswapper-model/inswapper_128.onnx && \
+    wget -O /home/webui-user/webui/models/roop/faceonnx.onnx https://github.com/FaceONNX/FaceONNX/releases/download/v1.0/faceonnx.onnx && \
+    wget -O /home/webui-user/webui/models/flux_realism_lora.safetensors https://huggingface.co/XLabs-AI/flux-RealismLora/resolve/main/lora.safetensors && \
+    wget -O /home/webui-user/webui/models/flux_controlnet_canny.safetensors https://huggingface.co/XLabs-AI/flux-controlnet-collections/resolve/main/canny.safetensors && \
+    wget -O /home/webui-user/webui/models/flux_controlnet_depth.safetensors https://huggingface.co/XLabs-AI/flux-controlnet-collections/resolve/main/depth.safetensors
 
 # Install Tailscale for SSH
 RUN curl -fsSL https://tailscale.com/install.sh | sudo sh

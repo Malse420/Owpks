@@ -4,6 +4,8 @@ FROM nvidia/cuda:11.7.1-cudnn8-runtime-ubuntu20.04
 # Set environment variables to avoid interactive tzdata configuration
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=America/Chicago
+ENV CUDA_VISIBLE_DEVICES=all
+ENV WEBUI_FLAGS="--precision full --no-half"
 
 # Install system dependencies, Python 3.10, and necessary libraries
 # Combine apt-get commands to reduce layers and clear cache to save space
@@ -38,6 +40,15 @@ WORKDIR /home/webui-user
 # Clone the AUTOMATIC1111 Stable Diffusion WebUI
 RUN git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git /home/webui-user/webui
 
+# Switch back to root to set up entrypoint
+USER root
+COPY entrypoint.sh /home/webui-user/entrypoint.sh
+RUN chown webui-user:webui-user /home/webui-user/entrypoint.sh
+RUN chmod +x /home/webui-user/entrypoint.sh
+
+# Switch back to the webui-user
+USER webui-user
+
 # Install Stable Diffusion WebUI dependencies, use --no-cache-dir to save space
 WORKDIR /home/webui-user/webui
 RUN pip install --no-cache-dir -r requirements.txt
@@ -46,8 +57,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN git clone https://github.com/s0md3v/sd-webui-roop.git extensions/sd-webui-roop
 
 # Install the required insightface library for Roop extension
-RUN pip install --no-cache-dir insightface
-
 # Create the models directory for Roop and download necessary models
 # Save space by removing wget artifacts and unused files
 RUN mkdir -p /home/webui-user/webui/models/roop/ && \
@@ -62,15 +71,8 @@ RUN mkdir -p /home/webui-user/webui/models/roop/ && \
 EXPOSE 7860 22
 
 # Entrypoint to run both WebUI and Tailscale
-COPY entrypoint.sh entrypoint.sh
-RUN chmod +x entrypoint.sh
 RUN sudo tailscale up
-# Use webui-user to run the WebUI
-USER webui-user
 
-# Set environment variables for GPU and WebUI
-ENV CUDA_VISIBLE_DEVICES=all
-ENV WEBUI_FLAGS="--precision full --no-half"
-
+# Set environment variables for GPU and WebU
 # Set the entrypoint
-ENTRYPOINT ["entrypoint.sh"]
+ENTRYPOINT ["/home/webui-user/entrypoint.sh"]

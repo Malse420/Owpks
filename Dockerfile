@@ -4,8 +4,8 @@ FROM nvidia/cuda:11.7.1-cudnn8-runtime-ubuntu20.04
 # Set environment variables to avoid interactive tzdata configuration
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=America/Chicago
-curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/focal.noarmor.gpg | sudo tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
-curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/focal.tailscale-keyring.list | sudo tee /etc/apt/sources.list.d/tailscale.list
+RUN curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/focal.noarmor.gpg | sudo tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
+RUN curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/focal.tailscale-keyring.list | sudo tee /etc/apt/sources.list.d/tailscale.list
 
 # Install system dependencies, Python 3.10, and necessary libraries
 # Combine apt-get commands to reduce layers and clear cache to save space

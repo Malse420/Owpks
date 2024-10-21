@@ -1,58 +1,42 @@
-name: Docker Image CI with CodeQL and Super-Linter
+name: Docker Build, Release, and Upload to Google Drive
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
 
 jobs:
-  build:
-
+  build-and-upload:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-
-    # Super-Linter to check code quality
-    - name: Run Super-Linter
-      uses: github/super-linter@v4
-      env:
-        VALIDATE_PYTHON: true
-        VALIDATE_DOCKERFILE: true
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    # Log in to Docker Hub using secrets stored in GitHub
-    - name: Log in to Docker Hub
-      run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-
-    # Build the Docker image
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
-
-    # Tag the Docker image
-    - name: Tag the Docker image
-      run: docker tag my-image-name:$(date +%s) my-dockerhub-username/my-image-name:latest
-
-    # Push the Docker image to Docker Hub
-    - name: Push the Docker image
-      run: docker push my-dockerhub-username/my-image-name:latest
-
-  # CodeQL job to analyze code for security vulnerabilities and performance issues
-  codeql-analysis:
-    name: CodeQL Analysis
-    runs-on: ubuntu-latest
-
-    steps:
+    # Step 1: Checkout code
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v2
 
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
-      with:
-        languages: 'python'
+    # Step 2: Build Docker image
+    - name: Build Docker image
+      run: docker build -t my-image-name .
 
-    - name: Perform CodeQL Analysis
+    # Step 3: Get release version (or use commit count for dynamic versioning)
+    - name: Get release version
+      id: version
       run: |
-        codeql database create db
-        codeql database analyze db --format=sarif -o results.sarif
+        if git describe --tags --abbrev=0; then
+          echo "VERSION=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
+        else
+          echo "VERSION=$(git rev-list --count HEAD)" >> $GITHUB_ENV
+        fi
+
+    # Step 4: Upload to Google Drive with dynamic version number
+    - name: Upload to Google Drive
+      uses: adityak74/google-drive-upload-git-action@v0.3
+      with:
+        credentials: ${{ secrets.GOOGLE_DRIVE_CREDENTIALS }}
+        filename: "archive.zip"
+        folderId: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
+        name: "backup_v${{ env.VERSION }}.zip"
+        overwrite: "true"

@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Docker Image CI with CodeQL and Super-Linter
 
 on:
   push:
@@ -7,12 +7,52 @@ on:
     branches: [ "main" ]
 
 jobs:
-
   build:
 
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
+
+    # Super-Linter to check code quality
+    - name: Run Super-Linter
+      uses: github/super-linter@v4
+      env:
+        VALIDATE_PYTHON: true
+        VALIDATE_DOCKERFILE: true
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    # Log in to Docker Hub using secrets stored in GitHub
+    - name: Log in to Docker Hub
+      run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+    # Build the Docker image
     - name: Build the Docker image
       run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+
+    # Tag the Docker image
+    - name: Tag the Docker image
+      run: docker tag my-image-name:$(date +%s) my-dockerhub-username/my-image-name:latest
+
+    # Push the Docker image to Docker Hub
+    - name: Push the Docker image
+      run: docker push my-dockerhub-username/my-image-name:latest
+
+  # CodeQL job to analyze code for security vulnerabilities and performance issues
+  codeql-analysis:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v2
+      with:
+        languages: 'python'
+
+    - name: Perform CodeQL Analysis
+      run: |
+        codeql database create db
+        codeql database analyze db --format=sarif -o results.sarif

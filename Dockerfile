@@ -55,8 +55,7 @@ RUN mkdir -p /home/webui-user/webui/models/roop/ && \
     rm -rf /tmp/* /var/tmp/*
 
 # Install Tailscale for SSH
-RUN curl -fsSL https://tailscale.com/install.sh | sudo sh
-
+RUN echo "$TAILSCALE_AUTH_KEY" | sudo -S sh -c 'curl -fsSL https://tailscale.com/install.sh | sudo sh'
 # Expose necessary ports for WebUI and Tailscale SSH
 EXPOSE 7860 22
 

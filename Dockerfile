@@ -62,8 +62,8 @@ RUN mkdir -p /home/webui-user/webui/models/roop/ && \
 EXPOSE 7860 22
 
 # Entrypoint to run both WebUI and Tailscale
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+COPY entrypoint.sh entrypoint.sh
+RUN chmod +x entrypoint.sh
 RUN sudo tailscale up
 # Use webui-user to run the WebUI
 USER webui-user
@@ -73,4 +73,4 @@ ENV CUDA_VISIBLE_DEVICES=all
 ENV WEBUI_FLAGS="--precision full --no-half"
 
 # Set the entrypoint
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["entrypoint.sh"]

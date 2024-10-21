@@ -1,13 +1,25 @@
 # Base image with CUDA 11.7 and cuDNN8
 FROM nvidia/cuda:11.7.1-cudnn8-runtime-ubuntu20.04
 
+# Set environment variables to avoid interactive tzdata configuration
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=America/Chicago
 
-# Install system dependencies
+# Install system dependencies, including Python 3.9
 RUN apt-get update && apt-get install -y \
-    wget git python3 python3-pip libgl1 libglib2.0-0 curl libgoogle-perftools-dev sudo && \
+    wget git python3.9 python3.9-distutils python3.9-venv \
+    libgl1 libglib2.0-0 curl libgoogle-perftools-dev sudo && \
+    ln -sf /usr/bin/python3.9 /usr/bin/python3 && \
+    ln -sf /usr/bin/python3.9 /usr/bin/python && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install pip for Python 3.9
+RUN wget https://bootstrap.pypa.io/get-pip.py && python3 get-pip.py && rm get-pip.py
+
+# Install NVIDIA Container Toolkit for GPU acceleration
+RUN apt-get update && apt-get install -y nvidia-container-toolkit && \
+    nvidia-ctk runtime configure --runtime=docker && \
+    systemctl restart docker
 
 # Install PyTorch with CUDA
 RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117
@@ -56,4 +68,5 @@ USER webui-user
 ENV CUDA_VISIBLE_DEVICES=all
 ENV WEBUI_FLAGS="--precision full --no-half"
 
+# Set the entrypoint
 ENTRYPOINT ["/entrypoint.sh"]

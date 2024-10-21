@@ -26,8 +26,8 @@ jobs:
 
     # Step 3: Build the Docker image
     - name: Build the Docker image
-      run: docker build -t my-image-name .
+      run: docker build -t facefusion .
 
     # Step 4: Push the Docker image to the registry
     - name: Push the Docker image
-      run: docker push my-image-name
+      run: docker push mstamu831/facefusion

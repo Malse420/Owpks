@@ -1,6 +1,9 @@
 # Base image with CUDA 11.7 and cuDNN8
 FROM nvidia/cuda:11.7.1-cudnn8-runtime-ubuntu20.04
 
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=America/Chicago
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     wget git python3 python3-pip libgl1 libglib2.0-0 curl libgoogle-perftools-dev sudo && \

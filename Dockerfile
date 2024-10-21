@@ -4,8 +4,6 @@ FROM nvidia/cuda:11.7.1-cudnn8-runtime-ubuntu20.04
 # Set environment variables to avoid interactive tzdata configuration
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=America/Chicago
-ENV CUDA_VISIBLE_DEVICES=all
-ENV WEBUI_FLAGS="--precision full --no-half"
 
 # Install system dependencies, Python 3.10, and necessary libraries
 # Combine apt-get commands to reduce layers and clear cache to save space
@@ -46,6 +44,9 @@ COPY entrypoint.sh /home/webui-user/entrypoint.sh
 RUN chown webui-user:webui-user /home/webui-user/entrypoint.sh
 RUN chmod +x /home/webui-user/entrypoint.sh
 
+# Allow webui-user to run tailscale without a password
+RUN echo "webui-user ALL=(ALL) NOPASSWD: /usr/sbin/tailscale" >> /etc/sudoers
+
 # Switch back to the webui-user
 USER webui-user
 
@@ -57,6 +58,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN git clone https://github.com/s0md3v/sd-webui-roop.git extensions/sd-webui-roop
 
 # Install the required insightface library for Roop extension
+RUN pip install --no-cache-dir insightface
+
 # Create the models directory for Roop and download necessary models
 # Save space by removing wget artifacts and unused files
 RUN mkdir -p /home/webui-user/webui/models/roop/ && \
@@ -65,14 +68,12 @@ RUN mkdir -p /home/webui-user/webui/models/roop/ && \
     wget -O /home/webui-user/webui/models/flux_realism_lora.safetensors https://huggingface.co/XLabs-AI/flux-RealismLora/resolve/main/lora.safetensors && \
     rm -rf /tmp/* /var/tmp/*
 
-# Install Tailscale for SSH
-
 # Expose necessary ports for WebUI and Tailscale SSH
 EXPOSE 7860 22
 
-# Entrypoint to run both WebUI and Tailscale
-RUN sudo tailscale up
+# Set environment variables for GPU and WebUI
+ENV CUDA_VISIBLE_DEVICES=all
+ENV WEBUI_FLAGS="--precision full --no-half"
 
-# Set environment variables for GPU and WebU
 # Set the entrypoint
 ENTRYPOINT ["/home/webui-user/entrypoint.sh"]

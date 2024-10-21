@@ -24,10 +24,20 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}  # Your Docker Hub username
         password: ${{ secrets.DOCKER_PASSWORD }}  # Your Docker Hub password
 
-    # Step 3: Build the Docker image
-    - name: Build the Docker image
-      run: docker build -t facefusion .
+    # Step 3: Set up Docker Buildx
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
 
-    # Step 4: Push the Docker image to the registry
+    # Step 4: Build the Docker image
+    - name: Build the Docker image
+      run: docker build -t mstamu831/facefusion:${{ github.sha }} .
+
+    # Step 5: Push the Docker image to Docker Hub
     - name: Push the Docker image
-      run: docker push mstamu831/facefusion
+      run: docker push mstamu831/facefusion:${{ github.sha }}
+
+    # Step 6: Push 'latest' tag (optional)
+    - name: Push the 'latest' tag
+      run: |
+        docker tag mstamu831/facefusion:${{ github.sha }} mstamu831/facefusion:latest
+        docker push mstamu831/facefusion:latest

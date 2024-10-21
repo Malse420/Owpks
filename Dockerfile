@@ -1,4 +1,4 @@
- # Base image with CUDA 11.7 and cuDNN8
+# Base image with CUDA 11.7 and cuDNN8
 FROM nvidia/cuda:11.7.1-cudnn8-runtime-ubuntu20.04
 
 # Install system dependencies

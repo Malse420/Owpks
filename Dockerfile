@@ -11,7 +11,7 @@ ENV PATH="/root/.local/bin:$PATH"
 # Step 1: Install prerequisites for adding PPAs and system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     software-properties-common wget git curl sudo ffmpeg \
-    libgl1 libglib2.0-0 libgoogle-perftools-dev
+    libgl1 libglib2.0-0 libgoogle-perftools-dev iproute2
 
 # Step 2: Add the Deadsnakes PPA for Python 3.10
 RUN add-apt-repository ppa:deadsnakes/ppa && apt-get update
@@ -55,6 +55,9 @@ RUN mkdir -p models/roop/ && \
     wget -O models/roop/inswapper_128.onnx https://huggingface.co/ezioruan/inswapper_128.onnx/resolve/main/inswapper_128.onnx && \
     wget -O models/flux_realism_lora.safetensors https://huggingface.co/XLabs-AI/flux-RealismLora/resolve/main/lora.safetensors && \
     rm -rf /tmp/* /var/tmp/*
+
+# Ensure FastAPI and Pydantic compatibility
+RUN pip install --no-cache-dir "fastapi==0.99.0" "pydantic==1.10.9"
 
 # Expose necessary ports
 EXPOSE 7860 22

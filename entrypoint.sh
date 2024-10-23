@@ -1,15 +1,15 @@
 #!/bin/bash
 
-# Start the Tailscale daemon in the background
-tailscaled &
+# Start the Tailscale daemon in the background with userspace networking
+tailscaled --tun=userspace-networking --accept-dns=false &
 
 # Wait for the Tailscale daemon to start
 sleep 5
 
-# Start Tailscale with the provided authentication key
+# Start Tailscale with the provided authentication key and disable DNS changes
 if [ -n "${TAILSCALE_AUTH_KEY}" ]; then
     echo "Starting Tailscale..."
-    tailscale up --authkey=${TAILSCALE_AUTH_KEY}
+    tailscale up --authkey=${TAILSCALE_AUTH_KEY} --accept-dns=false
 else
     echo "TAILSCALE_AUTH_KEY is not set. Skipping Tailscale startup."
 fi
@@ -20,7 +20,7 @@ check_tailscale() {
         echo "Tailscale is running."
     else
         echo "Tailscale is not running. Restarting..."
-        tailscale up --authkey=${TAILSCALE_AUTH_KEY}
+        tailscale up --authkey=${TAILSCALE_AUTH_KEY} --accept-dns=false
     fi
 }
 

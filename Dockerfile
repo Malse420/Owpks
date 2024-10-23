@@ -1,5 +1,5 @@
 # Base image with CUDA 11.7 and cuDNN8 for GPU acceleration
-FROM nvidia/cuda:11.7.1-cudnn8-runtime-ubuntu20.04
+FROM siutin/stable-diffusion-webui-docker:latest-cuda
 
 # Set environment variables for non-interactive installs and timezone
 ENV DEBIAN_FRONTEND=noninteractive

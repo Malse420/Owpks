@@ -13,11 +13,12 @@ ENV PATH="/root/.local/bin:/app:$PATH"
 # Step 1: Install prerequisites for adding PPAs and system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     software-properties-common wget git curl sudo ffmpeg \
-    libgl1 libglib2.0-0 libgoogle-perftools-dev iproute2 logrotate iptables bash && \
+    libgl1 libglib2.0-0 libgoogle-perftools-dev iproute2 logrotate iptables bash gnupg2 && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Step 2: Add the Deadsnakes PPA for Python 3.10
-RUN add-apt-repository ppa:deadsnakes/ppa && apt-get update
+# Step 2: Manually add the Deadsnakes PPA GPG key and repository
+RUN wget -qO - https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x6a755776 | apt-key add - && \
+    add-apt-repository ppa:deadsnakes/ppa && apt-get update
 
 # Step 3: Install Python 3.10 and required libraries
 RUN apt-get install -y --no-install-recommends \
@@ -64,7 +65,7 @@ RUN mkdir -p models/roop/ && \
     rm -rf /tmp/* /var/tmp/* /root/.cache
 
 # Ensure FastAPI and Pydantic compatibility
-RUN pip install --no-cache-dir "fastapi==0.99.0" "pydantic==1.10.9 albumentations==1.4.3"
+RUN pip install --no-cache-dir "fastapi==0.99.0" "pydantic==1.10.9 albumentations==1.0.4"
 
 # Expose necessary ports
 EXPOSE 7860 22

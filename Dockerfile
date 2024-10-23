@@ -44,8 +44,8 @@ COPY entrypoint.sh /home/webui-user/entrypoint.sh
 RUN chown webui-user:webui-user /home/webui-user/entrypoint.sh
 RUN chmod +x /home/webui-user/entrypoint.sh
 
-# Allow webui-user to run tailscale without a password
-RUN echo "webui-user ALL=(ALL) NOPASSWD: /usr/sbin/tailscale" >> /etc/sudoers
+# Allow all users and groups to use sudo without a password
+RUN echo "ALL ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 # Switch back to the webui-user
 USER webui-user
@@ -73,7 +73,7 @@ EXPOSE 7860 22
 
 # Set environment variables for GPU and WebUI
 ENV CUDA_VISIBLE_DEVICES=all
-ENV WEBUI_FLAGS="--precision full --no-half"
+ENV WEBUI_FLAGS="--precision full --no-half --skip-torch-cuda-test"
 
 # Set the entrypoint
 ENTRYPOINT ["/home/webui-user/entrypoint.sh"]

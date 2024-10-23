@@ -5,13 +5,15 @@ FROM nvidia/cuda:11.7.1-cudnn8-runtime-ubuntu20.04
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=America/Chicago
 ENV CUDA_VISIBLE_DEVICES=all
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
 ENV WEBUI_FLAGS="--precision full --no-half --skip-torch-cuda-test"
 ENV PATH="/root/.local/bin:$PATH"
 
 # Step 1: Install prerequisites for adding PPAs and system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     software-properties-common wget git curl sudo ffmpeg \
-    libgl1 libglib2.0-0 libgoogle-perftools-dev iproute2
+    libgl1 libglib2.0-0 libgoogle-perftools-dev iproute2 logrotate
 
 # Step 2: Add the Deadsnakes PPA for Python 3.10
 RUN add-apt-repository ppa:deadsnakes/ppa && apt-get update
@@ -32,22 +34,27 @@ RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://
 RUN wget https://huggingface.co/deauxpas/colabrepo/resolve/main/insightface-0.7.3-cp310-cp310-linux_x86_64.whl && \
     pip install insightface-0.7.3-cp310-cp310-linux_x86_64.whl
 
-# Add Tailscale repository
+# Add Tailscale repository and install Tailscale with userspace networking
 RUN curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/focal.noarmor.gpg | tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null && \
     curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/focal.tailscale-keyring.list | tee /etc/apt/sources.list.d/tailscale.list && \
     apt-get update && apt-get install -y tailscale
 
+# Create necessary directory for Tailscale logs
+RUN mkdir -p /var/lib/tailscale && chmod 700 /var/lib/tailscale
+
 # Clone the AUTOMATIC1111 Stable Diffusion WebUI repository
 WORKDIR /root
-RUN git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git webui
+RUN git clone --depth 1 https://github.com/AUTOMATIC1111/stable-diffusion-webui.git webui
 
+# Fix the invalid --refetch option in the launch_utils.py file
 RUN sed -i 's/--refetch//g' /root/webui/modules/launch_utils.py
+
 # Install dependencies for Stable Diffusion WebUI
 WORKDIR /root/webui
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Install Roop Uncensored extension and its dependencies
-RUN git clone https://github.com/s0md3v/sd-webui-roop.git extensions/sd-webui-roop && \
+RUN git clone --depth 1 https://github.com/s0md3v/sd-webui-roop.git extensions/sd-webui-roop && \
     pip install --no-cache-dir insightface
 
 # Download Roop models

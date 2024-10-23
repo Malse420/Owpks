@@ -1,23 +1,22 @@
 #!/bin/bash
 
-# Start the Tailscale daemon in the background with userspace networking
-tailscaled --tun=userspace-networking --socks5-server=localhost:1055 &
-TAILSCALED_PID=$!
+# Function to handle termination signals (SIGTERM)
+_term() {
+    echo "Caught SIGTERM signal. Logging out and cleaning up."
+    trap - TERM
+    kill -TERM $TAILSCALE_DAEMON_PID
+    wait $TAILSCALE_DAEMON_PID
+}
 
-# Wait for the Tailscale daemon to start
-sleep 5
+# Trap SIGTERM and SIGINT for graceful shutdown
+trap _term TERM
 
-# Start Tailscale with ephemeral key and disable DNS changes
-if [ -n "${TAILSCALE_AUTH_KEY}" ]; then
-    echo "Starting Tailscale with ephemeral authentication..."
-    tailscale up --authkey=${TAILSCALE_AUTH_KEY}?ephemeral=true --accept-dns=false
-    if [ $? -ne 0 ]; then
-        echo "Tailscale failed to start. Exiting..."
-        exit 1
-    fi
-else
-    echo "TAILSCALE_AUTH_KEY is not set. Skipping Tailscale startup."
-fi
+# Start the Tailscale daemon with specified state and socket paths
+/app/tailscaled --state=/var/lib/tailscale/tailscaled.state --socket=/var/run/tailscale/tailscaled.sock &
+TAILSCALE_DAEMON_PID=$!
+
+# Start Tailscale with provided authentication key and hostname
+/app/tailscale up --ssh --authkey=${TAILSCALE_AUTHKEY} --hostname=${KOYEB_APP_NAME}-${KOYEB_SERVICE_NAME}
 
 # Start Stable Diffusion WebUI
 echo "Starting Stable Diffusion WebUI..."
@@ -26,13 +25,5 @@ python launch.py ${WEBUI_FLAGS} &
 WEBUI_PID=$!
 echo "Stable Diffusion WebUI started with PID ${WEBUI_PID}."
 
-# Function to handle script termination gracefully
-cleanup() {
-    echo "Shutting down Tailscale and WebUI..."
-    kill ${TAILSCALED_PID} ${WEBUI_PID}
-    wait ${TAILSCALED_PID} ${WEBUI_PID}
-    exit 0
-}
-
-# Trap SIGTERM and SIGINT to gracefully shut down
-trap cleanup SIGTERM SIGINT
+# Wait for the process to complete and handle cleanup
+wait ${TAILSCALE_DAEMON_PID} ${WEBUI_PID}

@@ -41,6 +41,7 @@ RUN curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/focal.noarmor.gpg | tee 
 WORKDIR /root
 RUN git clone https://github.com/AUTOMATIC1111/stable-diffusion-webui.git webui
 
+RUN sed -i 's/--refetch//g' /root/webui/modules/launch_utils.py
 # Install dependencies for Stable Diffusion WebUI
 WORKDIR /root/webui
 RUN pip install --no-cache-dir -r requirements.txt

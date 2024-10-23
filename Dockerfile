@@ -8,19 +8,21 @@ ENV CUDA_VISIBLE_DEVICES=all
 ENV WEBUI_FLAGS="--precision full --no-half --skip-torch-cuda-test"
 ENV PATH="/root/.local/bin:$PATH"
 
-# Install system dependencies, Python 3.10, and necessary libraries
+# Install system dependencies, add deadsnakes PPA for Python 3.10, and install Python 3.10 and required libraries
 RUN apt-get update && \
     apt-get install -y --no-install-recommends software-properties-common wget git python3.10 \
     python3.10-distutils python3.10-venv libgl1 libglib2.0-0 curl libgoogle-perftools-dev \
     sudo ffmpeg && \
+    add-apt-repository ppa:deadsnakes/ppa && \
+    apt-get update && \
     ln -sf /usr/bin/python3.10 /usr/bin/python3 && \
     ln -sf /usr/bin/python3.10 /usr/bin/python && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Install pip for Python 3.10
+# Install pip for Python 3.10 and remove the installer after use
 RUN wget https://bootstrap.pypa.io/get-pip.py && python3 get-pip.py && rm get-pip.py
 
-# Install PyTorch with CUDA support
+# Install PyTorch with CUDA support for GPU acceleration
 RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117
 
 # Install insightface

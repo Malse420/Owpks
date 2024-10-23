@@ -1,0 +1,54 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Checkout the repository
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    # Step 2: Set up Docker Buildx
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    # Step 3: Restore Docker layer cache
+    - name: Cache Docker layers
+      uses: actions/cache@v3
+      with:
+        path: /tmp/.buildx-cache
+        key: buildx-${{ github.sha }}
+        restore-keys: |
+          buildx-
+
+    # Step 4: Build the Docker image with BuildKit caching enabled
+    - name: Build the Docker image
+      run: |
+        docker buildx create --use
+        docker buildx build --cache-from=type=local,src=/tmp/.buildx-cache --cache-to=type=local,dest=/tmp/.buildx-cache,mode=max -t mstamu831/facefusion:${{ github.sha }} .
+
+    # Step 5: Log in to Docker Hub (or other registry)
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}  # Your Docker Hub username
+        password: ${{ secrets.DOCKER_PASSWORD }}  # Your Docker Hub password
+
+    # Step 6: Push the Docker image to Docker Hub
+    - name: Push the Docker image
+      run: docker push mstamu831/facefusion:${{ github.sha }}
+
+    # Step 7: Push 'latest' tag (optional)
+    - name: Push the 'latest' tag
+      run: |
+        docker tag mstamu831/facefusion:${{ github.sha }} mstamu831/facefusion:latest
+        docker push mstamu831/facefusion:latest

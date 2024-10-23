@@ -7,7 +7,7 @@ ENV TZ=America/Chicago
 ENV CUDA_VISIBLE_DEVICES=all
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
-ENV WEBUI_FLAGS="--precision full --no-half --skip-torch-cuda-test"
+ENV WEBUI_FLAGS="--insecure --listen --skip-torch-cuda-test"
 ENV PATH="/root/.local/bin:/app:$PATH"
 
 # Step 1: Install prerequisites for adding PPAs and system dependencies

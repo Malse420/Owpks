@@ -1,26 +1,55 @@
 # Dockerfile.Nightly
 
-# https://gitlab.com/nvidia/container-images/cuda/-/blob/master/dist/11.7.1/ubuntu2204/devel/cudnn8/Dockerfile
-# FROM nvidia/cuda:11.7.1-cudnn8-devel-ubuntu22.04
-# https://gitlab.com/nvidia/container-images/cuda/-/blob/master/dist/11.7.1/ubuntu2204/base/Dockerfile
+# Base image with CUDA 11.7 and cuDNN8 for GPU acceleration
 FROM nvidia/cuda:11.7.1-base-ubuntu22.04
-ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get update -y && apt-get upgrade -y && apt-get install -y libgl1 libglib2.0-0 wget git git-lfs python3-pip python-is-python3 libcairo2-dev pkg-config python3-dev && rm -rf /var/lib/apt/lists/*
+# Set environment variables for non-interactive installs and timezone
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=America/Chicago
+ENV CUDA_VISIBLE_DEVICES=all
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
 
+# Install prerequisites for adding PPAs and system dependencies
+RUN apt-get update -y && apt-get upgrade -y && apt-get install -y \
+    libgl1 libglib2.0-0 wget git git-lfs python3-pip python-is-python3 libcairo2-dev \
+    pkg-config python3-dev software-properties-common curl sudo ffmpeg \
+    libgoogle-perftools-dev iproute2 logrotate iptables bash gnupg2 && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Manually add the Deadsnakes PPA GPG key and repository
+RUN wget -qO - https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x6a755776 | apt-key add - && \
+    add-apt-repository ppa:deadsnakes/ppa && apt-get update
+
+# Install Python 3.10 and required libraries
+RUN apt-get install -y --no-install-recommends \
+    python3.10 python3.10-distutils python3.10-venv && \
+    ln -sf /usr/bin/python3.10 /usr/bin/python && \
+    ln -sf /usr/bin/python3.10 /usr/bin/python3 && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install pip for Python 3.10
+RUN wget https://bootstrap.pypa.io/get-pip.py && python3.10 get-pip.py && rm get-pip.py
+
+# Install PyTorch with CUDA support for GPU acceleration
+RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117
+
+# Install insightface
+RUN wget https://huggingface.co/deauxpas/colabrepo/resolve/main/insightface-0.7.3-cp310-cp310-linux_x86_64.whl && \
+    pip install insightface-0.7.3-cp310-cp310-linux_x86_64.whl
+
+# Upgrade pip and install additional Python packages
+RUN pip3 install --upgrade pip
+RUN pip install xformers==0.0.16 triton==2.0.0 numexpr
+
+# Add user and set up the working directory
 RUN adduser --disabled-password --gecos '' user
 RUN mkdir /content && chown -R user:user /content
 WORKDIR /content
 USER user
 
-RUN pip3 install --upgrade pip
-RUN pip install xformers==0.0.16
-RUN pip install triton==2.0.0
-RUN pip install numexpr
-
-
+# Clone the AUTOMATIC1111 Stable Diffusion WebUI repository and other dependencies
 RUN git clone -b v2.1 https://github.com/camenduru/stable-diffusion-webui
-ADD --chown=user https://raw.githubusercontent.com/camenduru/stable-diffusion-webui-scripts/main/run_n_times.py /content/stable-diffusion-webui/scripts/run_n_times.py
 RUN git clone https://github.com/deforum-art/deforum-for-automatic1111-webui /content/stable-diffusion-webui/extensions/deforum-for-automatic1111-webui
 RUN git clone https://github.com/AlUlkesh/stable-diffusion-webui-images-browser /content/stable-diffusion-webui/extensions/stable-diffusion-webui-images-browser
 RUN git clone https://github.com/camenduru/stable-diffusion-webui-huggingface /content/stable-diffusion-webui/extensions/stable-diffusion-webui-huggingface
@@ -34,6 +63,7 @@ RUN git clone https://github.com/camenduru/sd-webui-tunnels /content/stable-diff
 RUN git clone https://github.com/etherealxx/batchlinks-webui /content/stable-diffusion-webui/extensions/batchlinks-webui
 RUN cd stable-diffusion-webui && git reset --hard
 
+# Add additional models and configurations from Hugging Face
 ADD --chown=user https://huggingface.co/ckpt/ControlNet/resolve/main/control_canny-fp16.safetensors /content/stable-diffusion-webui/extensions/sd-webui-controlnet/models/control_canny-fp16.safetensors
 ADD --chown=user https://huggingface.co/ckpt/ControlNet/resolve/main/control_depth-fp16.safetensors /content/stable-diffusion-webui/extensions/sd-webui-controlnet/models/control_depth-fp16.safetensors
 ADD --chown=user https://huggingface.co/ckpt/ControlNet/resolve/main/control_hed-fp16.safetensors /content/stable-diffusion-webui/extensions/sd-webui-controlnet/models/control_hed-fp16.safetensors
@@ -58,13 +88,17 @@ ADD --chown=user https://huggingface.co/ckpt/ControlNet/resolve/main/t2iadapter_
 ADD --chown=user https://huggingface.co/ckpt/ControlNet/resolve/main/t2iadapter_color_sd14v1.pth /content/stable-diffusion-webui/extensions/sd-webui-controlnet/models/t2iadapter_color_sd14v1.pth
 ADD --chown=user https://huggingface.co/ckpt/ControlNet/resolve/main/t2iadapter_canny_sd14v1.pth /content/stable-diffusion-webui/extensions/sd-webui-controlnet/models/t2iadapter_canny_sd14v1.pth
 
-RUN sed -i -e '''/    prepare_environment()/a\    os.system\(f\"""sed -i -e ''\"s/dict()))/dict())).cuda()/g\"'' /content/stable-diffusion-webui/repositories/stable-diffusion-stability-ai/ldm/util.py""")''' /content/stable-diffusion-webui/launch.py
+# Apply patches to the cloned repositories
+RUN sed -i -e 's/dict()))/dict())).cuda()/g' /content/stable-diffusion-webui/repositories/stable-diffusion-stability-ai/ldm/util.py
 RUN sed -i -e 's/fastapi==0.90.1/fastapi==0.89.1/g' /content/stable-diffusion-webui/requirements_versions.txt
 RUN sed -i -e 's/    start()/    #start()/g' /content/stable-diffusion-webui/launch.py
 RUN cd stable-diffusion-webui && python launch.py --skip-torch-cuda-test
 
+# Add additional models
 ADD --chown=user https://huggingface.co/ckpt/sd15/resolve/main/v1-5-pruned-emaonly.ckpt /content/stable-diffusion-webui/models/Stable-diffusion/v1-5-pruned-emaonly.ckpt
 
-EXPOSE 7860
+# Expose necessary ports
+EXPOSE 7860 22
 
+# Set entrypoint
 CMD cd /content/stable-diffusion-webui && python webui.py --xformers --listen --enable-insecure-extension-access --gradio-queue

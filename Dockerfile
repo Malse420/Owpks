@@ -32,6 +32,13 @@ RUN wget https://huggingface.co/deauxpas/colabrepo/resolve/main/insightface-0.7.
 # Create a non-root user to avoid running processes as root
 RUN useradd -m webui-user
 
+# Add .local/bin to the PATH for all users including root
+RUN mkdir -p /root/.local/bin && mkdir -p /home/webui-user/.local/bin && \
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> /etc/profile && \
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> /etc/bash.bashrc && \
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> /root/.bashrc && \
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> /home/webui-user/.bashrc
+
 # Switch to the new user
 USER webui-user
 WORKDIR /home/webui-user

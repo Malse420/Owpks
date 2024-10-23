@@ -8,19 +8,22 @@ ENV CUDA_VISIBLE_DEVICES=all
 ENV WEBUI_FLAGS="--precision full --no-half --skip-torch-cuda-test"
 ENV PATH="/root/.local/bin:$PATH"
 
-# Install system dependencies, add deadsnakes PPA for Python 3.10, and install Python 3.10 and required libraries
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends software-properties-common wget git python3.10 \
-    python3.10-distutils python3.10-venv libgl1 libglib2.0-0 curl libgoogle-perftools-dev \
-    sudo ffmpeg && \
-    add-apt-repository ppa:deadsnakes/ppa && \
-    apt-get update && \
-    ln -sf /usr/bin/python3.10 /usr/bin/python3 && \
-    ln -sf /usr/bin/python3.10 /usr/bin/python && \
-    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+# Step 1: Install prerequisites for adding PPAs and system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    software-properties-common wget git curl sudo ffmpeg \
+    libgl1 libglib2.0-0 libgoogle-perftools-dev
 
-# Install pip for Python 3.10 and remove the installer after use
-RUN wget https://bootstrap.pypa.io/get-pip.py && python3 get-pip.py && rm get-pip.py
+# Step 2: Add the Deadsnakes PPA for Python 3.10
+RUN add-apt-repository ppa:deadsnakes/ppa && apt-get update
+
+# Step 3: Install Python 3.10 and required libraries
+RUN apt-get install -y --no-install-recommends \
+    python3.10 python3.10-distutils python3.10-venv && \
+    ln -sf /usr/bin/python3.10 /usr/bin/python && \
+    ln -sf /usr/bin/python3.10 /usr/bin/python3
+
+# Step 4: Install pip for Python 3.10
+RUN wget https://bootstrap.pypa.io/get-pip.py && python3.10 get-pip.py && rm get-pip.py
 
 # Install PyTorch with CUDA support for GPU acceleration
 RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117
@@ -31,7 +34,8 @@ RUN wget https://huggingface.co/deauxpas/colabrepo/resolve/main/insightface-0.7.
 
 # Add Tailscale repository
 RUN curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/focal.noarmor.gpg | tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null && \
-    curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/focal.tailscale-keyring.list | tee /etc/apt/sources.list.d/tailscale.list
+    curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/focal.tailscale-keyring.list | tee /etc/apt/sources.list.d/tailscale.list && \
+    apt-get update && apt-get install -y tailscale
 
 # Clone the AUTOMATIC1111 Stable Diffusion WebUI repository
 WORKDIR /root

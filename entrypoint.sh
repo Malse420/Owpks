@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Start the Tailscale daemon in the background with userspace networking and disable host network changes
-tailscaled --tun=userspace-networking --accept-dns=false --socks5-server=localhost:1055 &
+# Start the Tailscale daemon in the background with userspace networking
+tailscaled --tun=userspace-networking --socks5-server=localhost:1055 &
 TAILSCALED_PID=$!
 
 # Wait for the Tailscale daemon to start
@@ -9,8 +9,8 @@ sleep 5
 
 # Start Tailscale with ephemeral key and disable DNS changes
 if [ -n "${TAILSCALE_AUTH_KEY}" ]; then
-    echo "Starting Tailscale..."
-    tailscale up --authkey=${TAILSCALE_AUTH_KEY} --ephemeral --accept-dns=false
+    echo "Starting Tailscale with ephemeral authentication..."
+    tailscale up --authkey=${TAILSCALE_AUTH_KEY}?ephemeral=true --accept-dns=false
     if [ $? -ne 0 ]; then
         echo "Tailscale failed to start. Exiting..."
         exit 1
@@ -25,7 +25,7 @@ check_tailscale() {
         echo "Tailscale is running."
     else
         echo "Tailscale is not running. Restarting..."
-        tailscale up --authkey=${TAILSCALE_AUTH_KEY} --ephemeral --accept-dns=false
+        tailscale up --authkey=${TAILSCALE_AUTH_KEY}?ephemeral=true --accept-dns=false
         if [ $? -ne 0 ]; then
             echo "Tailscale failed to restart. Exiting..."
             exit 1

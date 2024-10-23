@@ -64,7 +64,7 @@ RUN mkdir -p models/roop/ && \
     rm -rf /tmp/* /var/tmp/* /root/.cache
 
 # Ensure FastAPI and Pydantic compatibility
-RUN pip install --no-cache-dir "fastapi==0.99.0" "pydantic==1.10.9"
+RUN pip install --no-cache-dir "fastapi==0.99.0" "pydantic==1.10.9 albumentations==1.4.3"
 
 # Expose necessary ports
 EXPOSE 7860 22

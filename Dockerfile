@@ -23,4 +23,4 @@ RUN git clone https://github.com/BlafKing/sd-civitai-browser-plus /stable-diffus
 EXPOSE 7860
 
 # Start the web UI
-CMD ["python", "launch.py", "--listen"]
+CMD ["python", "launch.py", "--listen --enable-insecure-extension-access || tail -f /dev/null"]
